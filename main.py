@@ -2,8 +2,10 @@ import time
 import math
 import cv2
 import torch
-from adafruit_motorkit import MotorKit
+import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
+from adafruit_motorkit import MotorKit
 
 def setup():
     # Setup Model
@@ -25,11 +27,23 @@ def setup():
     global depth_to_distance_factor
     depth_to_distance_factor = 1.0 / 250.0
 
+def reshapeForModel(frame):
+    # Resize the frame to (224, 224)
+    resized_frame = cv2.resize(frame, (224, 224))
+
+    # Expand dimensions to match the target shape (1, 224, 224, 3)
+    reshaped_frame = np.expand_dims(resized_frame, axis=0)
+
+    # Optionally, you can normalize the pixel values to be in the range [0, 1]
+    reshaped_frame = reshaped_frame / 255.0
+
+    return reshaped_frame
+
 def bboxCenterPoint(bbox):
     bbox_center_x = ((bbox[0] + bbox[2]) / 2) * 224
     bbox_center_y = ((bbox[1] + bbox[3]) / 2) * 224
 
-    return bbox_center_x, bbox_center_y
+    return [bbox_center_x, bbox_center_y]
 
 def calculate_direction(X, frame_width=224):
     frame_center_x = frame_width / 2
@@ -78,16 +92,16 @@ def adjust_motors(x_component, depth, frame_width=224):
     pwm = (x_component / max_x) * (max_pwm - min_pwm) + min_pwm
 
     if depth > 1.00:                        # Object is far, move towards it
-        if x_component > 0:                 # Object is on the right of the center, turn left
-            kit.motor1.throttle = pwm
+        if x_component > 0:                 # Object is on the right of the center, turn right
+            kit.motor1.throttle = None
             kit.motor2.throttle = -pwm      # Motors 1 and 4 are placed in the front
             kit.motor3.throttle = -pwm      # Motors 2 and 3 are placed in the opposite direction
-            kit.motor4.throttle = None
-        elif x_component < 0:               # Object is on the left of the center, turn right
-            kit.motor1.throttle = None
+            kit.motor4.throttle = pwm
+        elif x_component < 0:               # Object is on the left of the center, turn left
+            kit.motor1.throttle = pwm
             kit.motor2.throttle = -pwm
             kit.motor3.throttle = -pwm
-            kit.motor4.throttle = pwm
+            kit.motor4.throttle = None
         elif x_component == 0:              # Object is on the center axis, move forward
             kit.motor1.throttle = pwm
             kit.motor2.throttle = -pwm
@@ -117,9 +131,13 @@ def main():
     while camStream.isOpened():
         ret, frame = camStream.read()
 
+        # reshape frame for model
+        modelFrame = reshapeForModel(frame)
+
         # Model goes here to check for object
 
-        bbox = (100, 27, 70, 90)    # TOTEST
+        # TestValues
+        # bbox = [0.0210451, 0.07524262, 0.18377778, 0.35889962]
 
         # Calculate the centerpoints of the bbox
         bboxCenter = bboxCenterPoint(bbox)

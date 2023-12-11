@@ -12,7 +12,7 @@ def setup():
 
     # Setup MotorKit
     global kit
-    kit = MotorKit
+    kit = MotorKit()
 
     # Setup MiDaS
     global midas
@@ -40,8 +40,8 @@ def reshapeForModel(frame):
     return reshaped_frame
 
 def bboxCenterPoint(bbox):
-    bbox_center_x = ((bbox[0] + bbox[2]) / 2) * 224
-    bbox_center_y = ((bbox[1] + bbox[3]) / 2) * 224
+    bbox_center_x = int(((bbox[0] + bbox[2]) / 2) * 224)
+    bbox_center_y = int(((bbox[1] + bbox[3]) / 2) * 224)
 
     return [bbox_center_x, bbox_center_y]
 
@@ -85,28 +85,22 @@ def determineDepth(frame, point):
     return distance
 
 def adjust_motors(x_component, depth, frame_width=224):
-    max_x = frame_width/2
-    max_pwm = 1.0
-    min_pwm = 0.3
-
-    pwm = (x_component / max_x) * (max_pwm - min_pwm) + min_pwm
-
     if depth > 1.00:                        # Object is far, move towards it
         if x_component > 0:                 # Object is on the right of the center, turn right
             kit.motor1.throttle = None
-            kit.motor2.throttle = -pwm      # Motors 1 and 4 are placed in the front
-            kit.motor3.throttle = -pwm      # Motors 2 and 3 are placed in the opposite direction
-            kit.motor4.throttle = pwm
+            kit.motor2.throttle = -1     	# Motors 1 and 4 are placed in the front
+            kit.motor3.throttle = -1      	# Motors 2 and 3 are placed in the opposite direction
+            kit.motor4.throttle = 1
         elif x_component < 0:               # Object is on the left of the center, turn left
-            kit.motor1.throttle = pwm
-            kit.motor2.throttle = -pwm
-            kit.motor3.throttle = -pwm
+            kit.motor1.throttle = 1
+            kit.motor2.throttle = -1
+            kit.motor3.throttle = -1
             kit.motor4.throttle = None
         elif x_component == 0:              # Object is on the center axis, move forward
-            kit.motor1.throttle = pwm
-            kit.motor2.throttle = -pwm
-            kit.motor3.throttle = -pwm
-            kit.motor4.throttle = pwm
+            kit.motor1.throttle = 1s
+            kit.motor2.throttle = -1
+            kit.motor3.throttle = -1
+            kit.motor4.throttle = 1
 
         time.sleep(1)
 
@@ -137,14 +131,14 @@ def main():
         # Model goes here to check for object
 
         # TestValues
-        # bbox = [0.0210451, 0.07524262, 0.18377778, 0.35889962]
+        bbox = [0.0210451, 0.07524262, 0.18377778, 0.35889962]
 
         # Calculate the centerpoints of the bbox
         bboxCenter = bboxCenterPoint(bbox)
 
         # Determine direction of turning
         vector_x = calculate_direction(bboxCenter[0])
-
+        
         # Determine depth
         depth = determineDepth(frame, bboxCenter)
 

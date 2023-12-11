@@ -116,11 +116,10 @@ def adjust_motors(x_component, depth, frame_width=224):
         kit.motor3.throttle = 0
         kit.motor4.throttle = 0
         
-def get_frames(camStream):
-    while True:
+def get_frames(camStream, stop_event):
+    while not stop_event.is_set():
         ret, frame = camStream.read()
         time.sleep(0.01)
-
 
 def main():
     # Run the setup for model, MotorKit, and MiDaS
@@ -137,7 +136,7 @@ def main():
     frame_thread.start()
 
     try:
-        while camStream.isOpened():
+        while camStream.isOpened() and not stop_event.is_set():
             # Read from the shared variable
             ret, frame = camStream.read()
 

@@ -1,9 +1,5 @@
-import sys
 import cv2
 import torch
-import math
-import time
-import threading
 from adafruit_motorkit import MotorKit
 import matplotlib.pyplot as plt
 

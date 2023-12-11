@@ -1,3 +1,5 @@
+import time
+import math
 import cv2
 import torch
 from adafruit_motorkit import MotorKit
@@ -91,12 +93,19 @@ def adjust_motors(x_component, depth, frame_width=224):
             kit.motor2.throttle = -pwm
             kit.motor3.throttle = -pwm
             kit.motor4.throttle = pwm
-    elif depth <= 1.00:
+
+        time.sleep(1)
+
         kit.motor1.throttle = 0
         kit.motor2.throttle = 0
         kit.motor3.throttle = 0
         kit.motor4.throttle = 0
 
+    elif depth <= 1.00:
+        kit.motor1.throttle = 0
+        kit.motor2.throttle = 0
+        kit.motor3.throttle = 0
+        kit.motor4.throttle = 0
 
 def main():
     # Run the setup for model, MotorKit, and MiDaS

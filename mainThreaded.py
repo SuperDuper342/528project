@@ -4,6 +4,7 @@ import cv2
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import threading
 from PIL import Image
 from adafruit_motorkit import MotorKit
 
@@ -114,6 +115,12 @@ def adjust_motors(x_component, depth, frame_width=224):
         kit.motor2.throttle = 0
         kit.motor3.throttle = 0
         kit.motor4.throttle = 0
+        
+def get_frames(camStream):
+    while True:
+        ret, frame = camStream.read()
+        time.sleep(0.01)
+
 
 def main():
     # Run the setup for model, MotorKit, and MiDaS
@@ -122,35 +129,54 @@ def main():
     # Hook into openCV
     camStream = cv2.VideoCapture(0)
 
-    while camStream.isOpened():
-        ret, frame = camStream.read()
+    # Create a threading.Event to signal the threads to stop
+    stop_event = threading.Event()
 
-        # reshape frame for model
-        modelFrame = reshapeForModel(frame)
+    # Start the frame capture thread
+    frame_thread = threading.Thread(target=get_frames, args=(camStream,), daemon=True)
+    frame_thread.start()
 
-        # Model goes here to check for object
+    try:
+        while camStream.isOpened():
+            # Read from the shared variable
+            ret, frame = camStream.read()
 
-        # TestValues
-        bbox = [0.0210451, 0.07524262, 0.18377778, 0.35889962]
+            if frame is None:
+                break
 
-        # Calculate the centerpoints of the bbox
-        bboxCenter = bboxCenterPoint(bbox)
+            # reshape frame for model
+            modelFrame = reshapeForModel(frame)
 
-        # Determine direction of turning
-        vector_x = calculate_direction(bboxCenter[0])
-        
-        # Determine depth
-        depth = determineDepth(frame, bboxCenter)
+            # Model goes here to check for object
 
-        # Adjust the motors
-        adjust_motors(vector_x, depth)
+            # TestValues
+            bbox = [0.0210451, 0.07524262, 0.18377778, 0.35889962]
 
-        if cv2.waitKey(10) & 0xFF == ord('q'):
-            break
+            # Calculate the centerpoints of the bbox
+            bboxCenter = bboxCenterPoint(bbox)
+
+            # Determine direction of turning
+            vector_x = calculate_direction(bboxCenter[0])
+            
+            # Determine depth
+            depth = determineDepth(frame, bboxCenter)
+
+            # Adjust the motors
+            adjust_motors(vector_x, depth)
+
+            if cv2.waitKey(10) & 0xFF == ord('q'):
+                break
     
-    # Release resources
-    camStream.release()
-    cv2.destroyAllWindows()
+    finally:
+        # Set the stop_event to stop the frame capture thread
+        stop_event.set()
+
+        # Release resources
+        camStream.release()
+        cv2.destroyAllWindows()
+
+        # Wait for the frame capture thread to finish
+        frame_thread.join()
 
 if __name__ == "__main__":
     main()

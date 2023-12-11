@@ -77,18 +77,18 @@ def adjust_motors(x_component, depth, frame_width=224):
 
     pwm = (x_component / max_x) * (max_pwm - min_pwm) + min_pwm
 
-    if depth > 1.00:
-        if x_component > 0: # Object is on the right of the center, turn left
+    if depth > 1.00:                        # Object is far, move towards it
+        if x_component > 0:                 # Object is on the right of the center, turn left
             kit.motor1.throttle = pwm
             kit.motor2.throttle = -pwm      # Motors 1 and 4 are placed in the front
             kit.motor3.throttle = -pwm      # Motors 2 and 3 are placed in the opposite direction
             kit.motor4.throttle = None
-        elif x_component < 0: # Object is on the left of the center, turn right
+        elif x_component < 0:               # Object is on the left of the center, turn right
             kit.motor1.throttle = None
             kit.motor2.throttle = -pwm
             kit.motor3.throttle = -pwm
             kit.motor4.throttle = pwm
-        elif x_component == 0:
+        elif x_component == 0:              # Object is on the center axis, move forward
             kit.motor1.throttle = pwm
             kit.motor2.throttle = -pwm
             kit.motor3.throttle = -pwm
@@ -101,7 +101,7 @@ def adjust_motors(x_component, depth, frame_width=224):
         kit.motor3.throttle = 0
         kit.motor4.throttle = 0
 
-    elif depth <= 1.00:
+    elif depth <= 1.00:                     # Object is near, stop        
         kit.motor1.throttle = 0
         kit.motor2.throttle = 0
         kit.motor3.throttle = 0

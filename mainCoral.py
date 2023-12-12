@@ -13,19 +13,9 @@ from adafruit_motorkit import MotorKit
 
 def setup():
     # Setup Model
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model', help='.tflite model path',
-                        default='/home/rkaitlin/528project/tracking_model_edgetpu.tflite')
-    parser.add_argument('--top_k', type=int, default=1,
-                        help='number of categories with highest score to display')
-    parser.add_argument('--camera_idx', type=int, help='Index of which video source to use. ', default = 0)
-    parser.add_argument('--threshold', type=float, default=1,
-                        help='classifier score threshold')
-    global args
-    args = parser.parse_args()
-
+    model_path = '/home/rkaitlin/528project/528project/tracking_model_edgetpu.tflite'
     global interpreter
-    interpreter = edgetpu.make_interpreter(args.model)
+    interpreter = edgetpu.make_interpreter(model_path, device='usb')
     interpreter.allocate_tensors()
 
     global inference_size
@@ -51,7 +41,7 @@ def setup():
 def reshapeForModel(frame):
     reshaped_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     reshaped_frame = cv2.resize(reshaped_frame, (inference_size[1], inference_size[0]))
-    return reshaped_frame / 255.0
+    return reshaped_frame
 
 def bboxCenterPoint(bbox):
     bbox_center_x = int((bbox[0] + bbox[2]) / 2)
@@ -133,12 +123,14 @@ def append_coords_to_img(conf, coords, img):
     if conf[0][0] < 0.9:
         return img, None
     
-    x0 = (coords[0][0])*224
-    y0 = (coords[0][1])*224
-    x1 = (coords[0][2])*224
-    y1 = (coords[0][3])*224
+    x0 = int((coords[0][0])*224)
+    y0 = int((coords[0][1])*224)
+    x1 = int((coords[0][2])*224)
+    y1 = int((coords[0][3])*224)
     
-    #img = cv2.rectangle(img, (x0, y0), (x1, y1), (0, 255, 0), 2)
+    print(x0, y0, x1, y1)
+    
+    img = cv2.rectangle(img, (x0, y0), (x1, y1), (0, 255, 0), 2)
 
     return img, [x0, y0, x1, y1]
 
@@ -152,26 +144,36 @@ def main():
     while camStream.isOpened():
         ret, frame = camStream.read()
 
-        print(frame.size)
-
         # reshape frame for model
         modelFrame = reshapeForModel(frame)
 
         # Model goes here to check for object
-        common.set_input(interpreter, modelFrame)
+        input_details = interpreter.get_input_details()
+        input_shape = input_details[0]['shape']
+        height = input_shape[1]
+        width = input_shape[2]
+        print(height)
+        print(width)
+        
+        input_index = input_details[0]['index']
+        
+        input_data = np.expand_dims(modelFrame, axis=0)
+        
+        input_data = np.float32(input_data)
+        
+        interpreter.set_tensor(input_index, input_data)
         interpreter.invoke()
+        
         output_details = interpreter.get_output_details()
         confidence = interpreter.get_tensor(output_details[0]['index'])
         coords = interpreter.get_tensor(output_details[1]['index'])
-        boundingBoxImg, bbox = append_coords_to_img(confidence, coords, (modelFrame * 255))
+        boundingBoxImg, bbox = append_coords_to_img(confidence, coords, modelFrame)
 
-        boundingBoxImg = cv2.resize()
-
-        # Display the image with bounding box
+        # Display the image boundingBox        
         cv2.imshow('Bounding Box', boundingBoxImg)
 
         # TestValues
-        # bbox = [0.0210451, 0.07524262, 0.18377778, 0.35889962]
+        #bbox = [0.0210451, 0.07524262, 0.18377778, 0.35889962]
 
         # Calculate the centerpoints of the bbox
         if bbox is not None:
@@ -181,7 +183,7 @@ def main():
             vector_x = calculate_direction(bboxCenter[0])
             
             # Determine depth
-            depth = determineDepth(frame, bboxCenter)
+            depth = determineDepth(modelFrame, bboxCenter)
 
             # Adjust the motors
             adjust_motors(vector_x, depth)

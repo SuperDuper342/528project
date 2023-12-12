@@ -28,15 +28,10 @@ def setup():
     depth_to_distance_factor = 1.0 / 250.0
 
 def reshapeForModel(frame):
-    # Resize the frame to (224, 224)
-    resized_frame = cv2.resize(frame, (224, 224))
-
-    # Expand dimensions to match the target shape (1, 224, 224, 3)
-    reshaped_frame = np.expand_dims(resized_frame, axis=0)
-
-    # Optionally, you can normalize the pixel values to be in the range [0, 1]
+    reshaped_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    reshaped_frame = cv2.resize(reshaped_frame, (224, 224))
     reshaped_frame = reshaped_frame / 255.0
-
+    reshaped_frame = reshaped_frame.astype(np.float32)
     return reshaped_frame
 
 def bboxCenterPoint(bbox, conf):

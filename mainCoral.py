@@ -138,7 +138,7 @@ def append_coords_to_img(conf, coords, img):
     x1 = (coords[0][2])*224
     y1 = (coords[0][3])*224
     
-    img = cv2.rectangle(img, (x0, y0), (x1, y1), (0, 255, 0), 2)
+    #img = cv2.rectangle(img, (x0, y0), (x1, y1), (0, 255, 0), 2)
 
     return img, [x0, y0, x1, y1]
 

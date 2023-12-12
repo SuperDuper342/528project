@@ -54,8 +54,8 @@ def reshapeForModel(frame):
     return reshaped_frame
 
 def bboxCenterPoint(bbox):
-    bbox_center_x = int(((bbox[0] + bbox[2]) / 2) * 224)
-    bbox_center_y = int(((bbox[1] + bbox[3]) / 2) * 224)
+    bbox_center_x = int((bbox[0] + bbox[2]) / 2)
+    bbox_center_y = int((bbox[1] + bbox[3]) / 2)
 
     return [bbox_center_x, bbox_center_y]
 

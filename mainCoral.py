@@ -161,7 +161,7 @@ def main():
         output_details = interpreter.get_output_details()
         confidence = interpreter.get_tensor(output_details[0]['index'])
         coords = interpreter.get_tensor(output_details[1]['index'])
-        boundingBoxImg, bbox = append_coords_to_img(confidence, coords, frame)
+        boundingBoxImg, bbox = append_coords_to_img(confidence, coords, modelFrame)
 
         # Display the image with bounding box
         cv2.imshow('Bounding Box', boundingBoxImg)
@@ -177,7 +177,7 @@ def main():
             vector_x = calculate_direction(bboxCenter[0])
             
             # Determine depth
-            depth = determineDepth(frame, bboxCenter)
+            depth = determineDepth(modelFrame, bboxCenter)
 
             # Adjust the motors
             adjust_motors(vector_x, depth)

@@ -34,14 +34,11 @@ def reshapeForModel(frame):
     reshaped_frame = reshaped_frame.astype(np.float32)
     return reshaped_frame
 
-def bboxCenterPoint(bbox, conf):
-    if conf < 0.90:
-        return False, None
-    else:
-        bbox_center_x = int(((bbox[0] + bbox[2]) / 2) * 224)
-        bbox_center_y = int(((bbox[1] + bbox[3]) / 2) * 224)
+def bboxCenterPoint(bbox):
+    bbox_center_x = int((bbox[0] + bbox[2]) / 2)
+    bbox_center_y = int((bbox[1] + bbox[3]) / 2)
 
-        return True, [bbox_center_x, bbox_center_y]
+    return [bbox_center_x, bbox_center_y]
 
 def calculate_direction(X, frame_width=224):
     frame_center_x = frame_width / 2
@@ -113,9 +110,30 @@ def adjust_motors(x_component, depth, frame_width=224):
         kit.motor3.throttle = 0
         kit.motor4.throttle = 0
 
+def append_coords_to_img(conf, coords):
+    if conf < 0.9:
+        return None
+    
+    x0 = int((coords[0][0])*680)
+    y0 = int((coords[0][1])*440)
+    x1 = int((coords[0][2])*680)
+    y1 = int((coords[0][3])*440)
+    
+    print(x0, y0, x1, y1)
+
+    return [x0, y0, x1, y1]
+
 def main():
     # Run the setup for model, MotorKit, and MiDaS
     setup()
+
+    arr = [[0.99973965, [0.09566244, 0.09882214, 0.43835637, 0.6129583]],   # Turn Left
+           [0.99979246, [0.66429305, 0.22275576, 0.933295, 0.58063793]],    # Turn Right
+           [0.9998633, [0.3553293, 0.53914285, 0.646554, 0.8747066]],       # Forward
+           [0.00922467, [0.06606074, 0.08888596, 0.05474899, 0.11458659]]   # No Movement
+           ]
+
+    i = 0
 
     # Hook into openCV
     camStream = cv2.VideoCapture(0)
@@ -123,59 +141,30 @@ def main():
     while camStream.isOpened():
         ret, frame = camStream.read()
 
-        # reshape frame for model
-        modelFrame = reshapeForModel(frame)
+        # Calculate the bbox
+        confidence = arr[i][0]
+        coords = arr[i][0]
 
-        # TestValues
-        bbox1 = [0.09566244, 0.09882214, 0.43835637, 0.6129583]
-        bbox2 = [0.66429305, 0.22275576, 0.933295, 0.58063793]
-        bbox3 = [0.3553293, 0.53914285, 0.646554, 0.8747066]
-        bbox4 = [0.06606074, 0.08888596, 0.05474899, 0.11458659]
-
-        conf1 = 0.99973965
-        conf2 = 0.99979246
-        conf3 = 0.9998633
-        conf4 = 0.00922467
-
-        # Calculate the centerpoints of the bbox
-        bool1, bboxCenter1 = bboxCenterPoint(bbox1, conf1)
-        bool2, bboxCenter2 = bboxCenterPoint(bbox2, conf2)
-        bool3, bboxCenter3 = bboxCenterPoint(bbox3, conf3)
-        bool4, bboxCenter4 = bboxCenterPoint(bbox4, conf4)
+        if i is 4:
+            i = 0
+        else:
+            i = i + 1
+        
+        bbox = append_coords_to_img(confidence, coords)
 
         # Determine direction of turning
-        if bool1 is True:
-            x1 = calculate_direction(bboxCenter1[0])
-            depth1 = determineDepth(modelFrame, bboxCenter1)
-            adjust_motors(x1, depth1)   # Should turn left
-            sleep(1)
-        elif bool1 is not True:
-            print("No Object Detected!")
+        if bbox is not None:
+            bboxCenter = bboxCenterPoint(bbox)
 
-        if bool2 is True:
-            depth2 = determineDepth(modelFrame, bboxCenter2)
-            x2 = calculate_direction(bboxCenter2[0])
-            adjust_motors(x2, depth2)   # Should turn right
-            sleep(1)
-        elif bool2 is not True:
-            print("No Object Detected!")
+            # Determine direction of turning
+            vector_x = calculate_direction(bboxCenter[0])
+            
+            # Determine depth
+            depth = determineDepth(frame, bboxCenter)
 
-        if bool3 is True:
-            x3 = calculate_direction(bboxCenter3[0])
-            depth3 = determineDepth(modelFrame, bboxCenter3)
-            adjust_motors(x3, depth3)   # Should go forward
-            sleep(1)
-        elif bool3 is not True:
-            print("No Object Detected!")
+            # Adjust the motors
+            adjust_motors(vector_x, depth)
 
-        if bool4 is True:
-            x4 = calculate_direction(bboxCenter4[0])
-            depth4 = determineDepth(modelFrame, bboxCenter4)
-            adjust_motors(x4, depth4)   # Should stop
-            sleep(1)
-        elif bool4 is not True:
-            print("No Object Detected!")
-        
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break
     

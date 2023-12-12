@@ -15,21 +15,21 @@ def setup():
     # Setup Model
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', help='.tflite model path',
-                        default='tracking_model.tflite')
+                        default='/home/rkaitlin/528project/tracking_model_edgetpu.tflite')
     parser.add_argument('--top_k', type=int, default=1,
                         help='number of categories with highest score to display')
     parser.add_argument('--camera_idx', type=int, help='Index of which video source to use. ', default = 0)
-    parser.add_argument('--threshold', type=float, default=0.9,
+    parser.add_argument('--threshold', type=float, default=1,
                         help='classifier score threshold')
     global args
     args = parser.parse_args()
 
     global interpreter
-    interpreter = make_interpreter(args.model)
+    interpreter = edgetpu.make_interpreter(args.model)
     interpreter.allocate_tensors()
 
     global inference_size
-    inference_size = input_size(interpreter)
+    inference_size = common.input_size(interpreter)
 
     # Setup MotorKit
     global kit
@@ -155,6 +155,10 @@ def main():
         # Model goes here to check for object
         common.set_input(interpreter, modelFrame)
         interpreter.invoke()
+        output_details = interpreter.get_output_details()
+        output_data = interpreter.get_tensor(output_details[1]['index'])
+        print(output_data)
+        print(output_data[0][0])
         objs = detect.get_objects(interpreter, args.threshold)[:args.top_k]
         boundingBoxImg, bbox = append_objs_to_img(objs, inference_size, objs)
 

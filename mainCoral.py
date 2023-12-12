@@ -4,11 +4,9 @@ import cv2
 import torch
 import numpy as np
 import argparse
-from pycoral.adapters.common import input_size
-from pycoral.adapters.detect import get_objects
-from pycoral.utils.dataset import read_label_file
-from pycoral.utils.edgetpu import make_interpreter
-from pycoral.utils.edgetpu import run_inference
+from pycoral.adapters import common
+from pycoral.adapters import detect
+from pycoral.utils import edgetpu
 import matplotlib.pyplot as plt
 from PIL import Image
 from adafruit_motorkit import MotorKit
@@ -52,8 +50,7 @@ def setup():
 
 def reshapeForModel(frame):
     reshaped_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    reshaped_frame = cv2.resize(reshaped_frame, inference_size)
-
+    reshaped_frame = cv2.resize(reshaped_frame, (inference_size[1], inference_size[0]))
     return reshaped_frame
 
 def bboxCenterPoint(bbox):
@@ -156,8 +153,9 @@ def main():
         modelFrame = reshapeForModel(frame)
 
         # Model goes here to check for object
-        run_inference(interpreter, modelFrame.tobytes())
-        objs = get_objects(interpreter, args.threshold)[:args.top_k]
+        common.set_input(interpreter, modelFrame)
+        interpreter.invoke()
+        objs = detect.get_objects(interpreter, args.threshold)[:args.top_k]
         boundingBoxImg, bbox = append_objs_to_img(objs, inference_size, objs)
 
         # TestValues

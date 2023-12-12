@@ -50,7 +50,7 @@ def setup():
 
 def reshapeForModel(frame):
     reshaped_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    reshaped_frame = cv2.resize(reshaped_frame, (inference_size[1], inference_size[0]))
+    reshaped_frame = cv2.resize(reshaped_frame, (inference_size[1], inference_size[0]), interpolation=cv2.INTER_AREA)
     return reshaped_frame
 
 def bboxCenterPoint(bbox):
@@ -152,6 +152,8 @@ def main():
     while camStream.isOpened():
         ret, frame = camStream.read()
 
+        print(frame.size)
+
         # reshape frame for model
         modelFrame = reshapeForModel(frame)
 
@@ -162,6 +164,8 @@ def main():
         confidence = interpreter.get_tensor(output_details[0]['index'])
         coords = interpreter.get_tensor(output_details[1]['index'])
         boundingBoxImg, bbox = append_coords_to_img(confidence, coords, modelFrame)
+
+        boundingBoxImg = cv2.resize()
 
         # Display the image with bounding box
         cv2.imshow('Bounding Box', boundingBoxImg)
@@ -177,7 +181,7 @@ def main():
             vector_x = calculate_direction(bboxCenter[0])
             
             # Determine depth
-            depth = determineDepth(modelFrame, bboxCenter)
+            depth = determineDepth(frame, bboxCenter)
 
             # Adjust the motors
             adjust_motors(vector_x, depth)

@@ -51,7 +51,7 @@ def setup():
 def reshapeForModel(frame):
     reshaped_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     reshaped_frame = cv2.resize(reshaped_frame, (inference_size[1], inference_size[0]))
-    return reshaped_frame
+    return reshaped_frame / 255.0
 
 def bboxCenterPoint(bbox):
     bbox_center_x = int((bbox[0] + bbox[2]) / 2)
@@ -163,7 +163,7 @@ def main():
         output_details = interpreter.get_output_details()
         confidence = interpreter.get_tensor(output_details[0]['index'])
         coords = interpreter.get_tensor(output_details[1]['index'])
-        boundingBoxImg, bbox = append_coords_to_img(confidence, coords, modelFrame)
+        boundingBoxImg, bbox = append_coords_to_img(confidence, coords, (modelFrame * 255))
 
         boundingBoxImg = cv2.resize()
 

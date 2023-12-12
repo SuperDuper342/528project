@@ -50,7 +50,7 @@ def setup():
 
 def reshapeForModel(frame):
     reshaped_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    reshaped_frame = cv2.resize(reshaped_frame, (inference_size[1], inference_size[0]), interpolation=cv2.INTER_AREA)
+    reshaped_frame = cv2.resize(reshaped_frame, (inference_size[1], inference_size[0]))
     return reshaped_frame
 
 def bboxCenterPoint(bbox):

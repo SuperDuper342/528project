@@ -163,6 +163,9 @@ def main():
         coords = interpreter.get_tensor(output_details[1]['index'])
         boundingBoxImg, bbox = append_coords_to_img(confidence, coords, frame)
 
+        # Display the image with bounding box
+        cv2.imshow('Bounding Box', boundingBoxImg)
+
         # TestValues
         # bbox = [0.0210451, 0.07524262, 0.18377778, 0.35889962]
 

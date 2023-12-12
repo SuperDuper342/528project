@@ -133,19 +133,13 @@ def adjust_motors(x_component, depth, frame_width=224):
         kit.motor4.throttle = 0
 
 def append_objs_to_img(img, inference_size, objs):
-    height, width, channels = img.shape
-    scale_x, scale_y = width / inference_size[0], height / inference_size[1]
-    for obj in objs:
-        bbox = obj.bbox.scale(scale_x, scale_y)
-        x0, y0 = int(bbox.xmin), int(bbox.ymin)
-        x1, y1 = int(bbox.xmax), int(bbox.ymax)
+    x0 = (objs[1][0][0])*224
+    y0 = (objs[1][0][1])*224
+    x1 = (objs[1][0][2])*224
+    y1 = (objs[1][0][3])*224
+    
+    img = cv2.rectangle(img, (x0, y0), (x1, y1), (0, 255, 0), 2)
 
-        percent = int(100 * obj.score)
-        label = '{}% {}'.format(percent, labels.get(obj.id, obj.id))
-
-        img = cv2.rectangle(img, (x0, y0), (x1, y1), (0, 255, 0), 2)
-        img = cv2.putText(img, label, (x0, y0+30),
-                             cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 0), 2)
     return img, [x0, y0, x1, y1]
 
 def main():

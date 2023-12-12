@@ -52,7 +52,7 @@ def setup():
 
 def reshapeForModel(frame):
     reshaped_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    reshaped_frame = cv2.resize(frame, inference_size)
+    reshaped_frame = cv2.resize(reshaped_frame, inference_size)
 
     return reshaped_frame
 

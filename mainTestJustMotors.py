@@ -1,10 +1,10 @@
-import time
 import math
 import cv2
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
+from sleep import sleep
 from adafruit_motorkit import MotorKit
 
 def setup():
@@ -100,7 +100,7 @@ def adjust_motors(x_component, depth, frame_width=224):
             kit.motor3.throttle = -1
             kit.motor4.throttle = 1
 
-        time.sleep(1)
+        sleep(1)
 
         kit.motor1.throttle = 0
         kit.motor2.throttle = 0
@@ -148,7 +148,7 @@ def main():
             x1 = calculate_direction(bboxCenter1[0])
             depth1 = determineDepth(modelFrame, bboxCenter1)
             adjust_motors(x1, depth1)   # Should turn left
-            time(1)
+            sleep(1)
         elif bool1 is not True:
             print("No Object Detected!")
 
@@ -156,7 +156,7 @@ def main():
             depth2 = determineDepth(modelFrame, bboxCenter2)
             x2 = calculate_direction(bboxCenter2[0])
             adjust_motors(x2, depth2)   # Should turn right
-            time(1)
+            sleep(1)
         elif bool2 is not True:
             print("No Object Detected!")
 
@@ -164,7 +164,7 @@ def main():
             x3 = calculate_direction(bboxCenter3[0])
             depth3 = determineDepth(modelFrame, bboxCenter3)
             adjust_motors(x3, depth3)   # Should go forward
-            time(1)
+            sleep(1)
         elif bool3 is not True:
             print("No Object Detected!")
 
@@ -172,7 +172,7 @@ def main():
             x4 = calculate_direction(bboxCenter4[0])
             depth4 = determineDepth(modelFrame, bboxCenter4)
             adjust_motors(x4, depth4)   # Should stop
-            time(1)
+            sleep(1)
         elif bool4 is not True:
             print("No Object Detected!")
         

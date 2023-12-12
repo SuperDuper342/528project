@@ -39,11 +39,14 @@ def reshapeForModel(frame):
 
     return reshaped_frame
 
-def bboxCenterPoint(bbox):
-    bbox_center_x = int(((bbox[0] + bbox[2]) / 2) * 224)
-    bbox_center_y = int(((bbox[1] + bbox[3]) / 2) * 224)
+def bboxCenterPoint(bbox, conf):
+    if conf < 0.90:
+        return False, None
+    else:
+        bbox_center_x = int(((bbox[0] + bbox[2]) / 2) * 224)
+        bbox_center_y = int(((bbox[1] + bbox[3]) / 2) * 224)
 
-    return [bbox_center_x, bbox_center_y]
+        return True, [bbox_center_x, bbox_center_y]
 
 def calculate_direction(X, frame_width=224):
     frame_center_x = frame_width / 2
@@ -128,23 +131,56 @@ def main():
         # reshape frame for model
         modelFrame = reshapeForModel(frame)
 
-        # Model goes here to check for object
-
         # TestValues
-        bbox = [0.0210451, 0.07524262, 0.18377778, 0.35889962]
+        bbox1 = [0.09566244, 0.09882214, 0.43835637, 0.6129583]
+        bbox2 = [0.66429305, 0.22275576, 0.933295, 0.58063793]
+        bbox3 = [0.3553293, 0.53914285, 0.646554, 0.8747066]
+        bbox4 = [0.06606074, 0.08888596, 0.05474899, 0.11458659]
+
+        conf1 = 0.99973965
+        conf2 = 0.99979246
+        conf3 = 0.9998633
+        conf4 = 0.00922467
 
         # Calculate the centerpoints of the bbox
-        bboxCenter = bboxCenterPoint(bbox)
+        bool1, bboxCenter1 = bboxCenterPoint(bbox1, conf1)
+        bool2, bboxCenter2 = bboxCenterPoint(bbox2, conf2)
+        bool3, bboxCenter3 = bboxCenterPoint(bbox3, conf3)
+        bool4, bboxCenter4 = bboxCenterPoint(bbox4, conf4)
 
         # Determine direction of turning
-        vector_x = calculate_direction(bboxCenter[0])
+        if bool1 is True:
+            x1 = calculate_direction(bboxCenter1[0])
+            depth1 = determineDepth(modelFrame, bboxCenter1)
+            adjust_motors(x1, depth1)   # Should turn left
+            time(1)
+        elif bool1 is not True:
+            print("No Object Detected!")
+
+        if bool2 is True:
+            depth2 = determineDepth(modelFrame, bboxCenter2)
+            x2 = calculate_direction(bboxCenter2[0])
+            adjust_motors(x2, depth2)   # Should turn right
+            time(1)
+        elif bool2 is not True:
+            print("No Object Detected!")
+
+        if bool3 is True:
+            x3 = calculate_direction(bboxCenter3[0])
+            depth3 = determineDepth(modelFrame, bboxCenter3)
+            adjust_motors(x3, depth3)   # Should go forward
+            time(1)
+        elif bool3 is not True:
+            print("No Object Detected!")
+
+        if bool4 is True:
+            x4 = calculate_direction(bboxCenter4[0])
+            depth4 = determineDepth(modelFrame, bboxCenter4)
+            adjust_motors(x4, depth4)   # Should stop
+            time(1)
+        elif bool4 is not True:
+            print("No Object Detected!")
         
-        # Determine depth
-        depth = determineDepth(frame, bboxCenter)
-
-        # Adjust the motors
-        adjust_motors(vector_x, depth)
-
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break
     

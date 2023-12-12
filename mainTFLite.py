@@ -2,7 +2,7 @@ import time
 import cv2
 import torch
 import numpy as np
-import tensoflow as tf
+import tensorflow as tf
 import matplotlib.pyplot as plt
 from PIL import Image
 from adafruit_motorkit import MotorKit
@@ -11,7 +11,7 @@ def setup():
     # Setup Model
     model_path = '/home/rkaitlin/528project/528project/tracking_model_edgetpu.tflite'
     global interpreter
-    interpreter.tf.lite.Interpreter(model_path=model_path)
+    interpreter = tf.lite.Interpreter(model_path=model_path)
     interpreter.allocate_tensors()
 
     global input_details, output_details

@@ -129,11 +129,14 @@ def adjust_motors(x_component, depth, frame_width=224):
         kit.motor3.throttle = 0
         kit.motor4.throttle = 0
 
-def append_objs_to_img(img, inference_size, objs):
-    x0 = (objs[1][0][0])*224
-    y0 = (objs[1][0][1])*224
-    x1 = (objs[1][0][2])*224
-    y1 = (objs[1][0][3])*224
+def append_coords_to_img(conf, coords, img):
+    if conf[0][0] < 0.9:
+        return img, None
+    
+    x0 = (coords[0][0])*224
+    y0 = (coords[0][1])*224
+    x1 = (coords[0][2])*224
+    y1 = (coords[0][3])*224
     
     img = cv2.rectangle(img, (x0, y0), (x1, y1), (0, 255, 0), 2)
 
@@ -156,26 +159,25 @@ def main():
         common.set_input(interpreter, modelFrame)
         interpreter.invoke()
         output_details = interpreter.get_output_details()
-        output_data = interpreter.get_tensor(output_details[1]['index'])
-        print(output_data)
-        print(output_data[0][0])
-        objs = detect.get_objects(interpreter, args.threshold)[:args.top_k]
-        boundingBoxImg, bbox = append_objs_to_img(objs, inference_size, objs)
+        confidence = interpreter.get_tensor(output_details[0]['index'])
+        coords = interpreter.get_tensor(output_details[1]['index'])
+        boundingBoxImg, bbox = append_coords_to_img(confidence, coords, frame)
 
         # TestValues
         # bbox = [0.0210451, 0.07524262, 0.18377778, 0.35889962]
 
         # Calculate the centerpoints of the bbox
-        bboxCenter = bboxCenterPoint(bbox)
+        if bbox is not None:
+            bboxCenter = bboxCenterPoint(bbox)
 
-        # Determine direction of turning
-        vector_x = calculate_direction(bboxCenter[0])
-        
-        # Determine depth
-        depth = determineDepth(frame, bboxCenter)
+            # Determine direction of turning
+            vector_x = calculate_direction(bboxCenter[0])
+            
+            # Determine depth
+            depth = determineDepth(frame, bboxCenter)
 
-        # Adjust the motors
-        adjust_motors(vector_x, depth)
+            # Adjust the motors
+            adjust_motors(vector_x, depth)
 
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break

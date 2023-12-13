@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-from sleep import sleep
+from time import sleep
 from adafruit_motorkit import MotorKit
 
 def setup():
@@ -40,7 +40,7 @@ def bboxCenterPoint(bbox):
 
     return [bbox_center_x, bbox_center_y]
 
-def calculate_direction(X, frame_width=224):
+def calculate_direction(X, frame_width=680):
     frame_center_x = frame_width / 2
 
     return X - frame_center_x
@@ -141,14 +141,14 @@ def main():
     while camStream.isOpened():
         ret, frame = camStream.read()
 
-        # Calculate the bbox
-        confidence = arr[i][0]
-        coords = arr[i][0]
-
         if i is 4:
             i = 0
         else:
             i = i + 1
+
+        # Calculate the bbox
+        confidence = arr[i][0]
+        coords = arr[i][0]
         
         bbox = append_coords_to_img(confidence, coords)
 
